@@ -12,6 +12,8 @@
         <button type="submit">Upload</button>
     </form>
     <div id="response"></div>
+    <h2>Uploaded Images</h2>
+    <div id="images"></div>
 
     <script>
         document.getElementById('uploadForm').addEventListener('submit', async (e) => {
@@ -24,6 +26,26 @@
             const result = await response.text();
             document.getElementById('response').innerText = result;
         });
+        async function loadImages() {
+            const response = await fetch('http://localhost:3000/images');
+            const images = await response.json();
+            console.log('Images:', images); // Log the images to verify data
+
+            const imagesDiv = document.getElementById('images');
+            imagesDiv.innerHTML = ''; // Clear any existing images
+
+            images.forEach(image => {
+                const img = document.createElement('img');
+                img.src = image.url;
+                img.alt = image.filename;
+                img.width = 200; // Adjust the size as needed
+                console.log('Appending image:', img); // Log the image element
+                imagesDiv.appendChild(img);
+            });
+        }
+
+        // Load images on page load
+        window.onload = loadImages;
     </script>
 </body>
 </html>

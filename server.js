@@ -7,6 +7,8 @@ const path = require('path');
 const app = express();
 const port = 3000;
 
+const minio_endPoint = 'localhost'
+
 // MySQL connection
 const db = mysql.createConnection({
     host: 'mysql-227be316-samanala-lms.d.aivencloud.com',
@@ -64,7 +66,7 @@ app.post('/upload', upload.single('image'), (req, res) => {
             return res.status(500).send(err);
         }
 
-        const fileUrl = `${minioClient.protocol}//${minioClient.endPoint}:${minioClient.port}/${bucketName}/${fileName}`;
+        const fileUrl = `${minioClient.protocol}//${minio_endPoint}:${minioClient.port}/${bucketName}/${fileName}`;
 
         db.query('INSERT INTO images (filename, url) VALUES (?, ?)', [fileName, fileUrl], (err, result) => {
             if (err) {
@@ -73,6 +75,17 @@ app.post('/upload', upload.single('image'), (req, res) => {
             }
             res.send('File uploaded successfully');
         });
+    });
+});
+
+// Endpoint to get list of images
+app.get('/images', (req, res) => {
+    db.query('SELECT * FROM images', (err, results) => {
+        if (err) {
+            console.error('Error fetching images from MySQL', err);
+            return res.status(500).send(err);
+        }
+        res.json(results);
     });
 });
 
