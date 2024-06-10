@@ -3,9 +3,13 @@ const multer = require('multer');
 const mysql = require('mysql2');
 const Minio = require('minio');
 const path = require('path');
+const bodyParser = require('body-parser');
 
 const app = express();
 const port = 3000;
+
+app.use(bodyParser.json());
+app.use(express.static('public'));
 
 const minio_endPoint = 'localhost'
 
@@ -28,9 +32,10 @@ const minioClient = new Minio.Client({
     endPoint: 'localhost',
     port: 9000,
     useSSL: false,
-    accessKey: '5U52U3eaEOde7ZiXtvC0',
-    secretKey: 'aHsIeOtF70EngSSuSdu7WO14E9F26KadhsrhhcRx'
+    accessKey: 'c3KiMNOeIoHp9e5gyJrR',
+    secretKey: 'wOlLz1Og14KBp6xU6CgIMN7KwfrySDUX4MnrQmiM'
 });
+
 
 // Create a bucket if it doesn't exist
 const bucketName = 'images';
@@ -48,27 +53,46 @@ minioClient.bucketExists(bucketName, (err, exists) => {
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-app.use(express.static('public'));
+app.post('/login', (req, res) => {
+    const { username } = req.body;
+    if (!username) {
+        return res.status(400).send('Username is required');
+    }
+
+    // Create user folder in MinIO
+    const userFolder = `${bucketName}/${username}/`;
+    minioClient.putObject(bucketName, `${username}/.keep`, '', (err, etag) => {
+        if (err) {
+            console.error('Error creating user folder in MinIO', err);
+            return res.status(500).send(err);
+        }
+
+        res.send('Login successful');
+    });
+});
 
 app.post('/upload', upload.single('image'), (req, res) => {
-    console.log('Received upload request');  // Log to verify the request
+    const username = req.body.username;
+    if (!username) {
+        return res.status(400).send('Username is required');
+    }
+
     if (!req.file) {
         console.error('No file uploaded');
         return res.status(400).send('No file uploaded.');
     }
 
     const fileName = Date.now() + path.extname(req.file.originalname);
-    const filePath = `${bucketName}/${fileName}`;
+    const filePath = `${username}/${fileName}`;
 
-    minioClient.putObject(bucketName, fileName, req.file.buffer, (err, etag) => {
+    minioClient.putObject(bucketName, filePath, req.file.buffer, (err, etag) => {
         if (err) {
             console.error('Error uploading to MinIO', err);
             return res.status(500).send(err);
         }
 
-        const fileUrl = `${minioClient.protocol}//${minio_endPoint}:${minioClient.port}/${bucketName}/${fileName}`;
-
-        db.query('INSERT INTO images (filename, url) VALUES (?, ?)', [fileName, fileUrl], (err, result) => {
+        const fileUrl = `http://${minio_endPoint}:${minioClient.port}/${bucketName}/${filePath}`;
+        db.query('INSERT INTO images (username, filename, url) VALUES (?, ?, ?)', [username, fileName, fileUrl], (err, result) => {
             if (err) {
                 console.error('Error inserting into MySQL', err);
                 return res.status(500).send(err);
@@ -78,9 +102,13 @@ app.post('/upload', upload.single('image'), (req, res) => {
     });
 });
 
-// Endpoint to get list of images
 app.get('/images', (req, res) => {
-    db.query('SELECT * FROM images', (err, results) => {
+    const username = req.query.username;
+    if (!username) {
+        return res.status(400).send('Username is required');
+    }
+
+    db.query('SELECT * FROM images WHERE username = ?', [username], (err, results) => {
         if (err) {
             console.error('Error fetching images from MySQL', err);
             return res.status(500).send(err);
