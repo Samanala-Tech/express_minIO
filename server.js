@@ -4,12 +4,14 @@ const mysql = require('mysql2');
 const Minio = require('minio');
 const path = require('path');
 const bodyParser = require('body-parser');
+const cors = require('cors');
 
 const app = express();
 const port = 3000;
 
 app.use(bodyParser.json());
 app.use(express.static('public'));
+app.use(cors());
 
 const minio_endPoint = 'localhost'
 
@@ -32,8 +34,8 @@ const minioClient = new Minio.Client({
     endPoint: 'localhost',
     port: 9000,
     useSSL: false,
-    accessKey: 'c3KiMNOeIoHp9e5gyJrR',
-    secretKey: 'wOlLz1Og14KBp6xU6CgIMN7KwfrySDUX4MnrQmiM'
+    accessKey: 'FfbyBKdG1Tg4qKNdmvLF',
+    secretKey: 'KttlZLQnz99FB20mOJ6Grz0OSzlbqaaZoVKKzO4r'
 });
 
 
