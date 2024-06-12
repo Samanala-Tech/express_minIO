@@ -13,7 +13,7 @@ app.use(bodyParser.json());
 app.use(express.static('public'));
 app.use(cors());
 
-const minio_endPoint = 'localhost'
+const minio_endPoint = '192.168.1.186'
 
 // MySQL connection
 const db = mysql.createConnection({
@@ -31,11 +31,11 @@ db.connect((err) => {
 
 // MinIO client configuration
 const minioClient = new Minio.Client({
-    endPoint: 'localhost',
+    endPoint: '192.168.1.186',
     port: 9000,
     useSSL: false,
-    accessKey: 'FfbyBKdG1Tg4qKNdmvLF',
-    secretKey: 'KttlZLQnz99FB20mOJ6Grz0OSzlbqaaZoVKKzO4r'
+    accessKey: 'ewopS2WbZF28JhI7nqQI',
+    secretKey: 'ME3u8f1ru3lum7pAnCihlGplDI6FNAnDii6yGIzO'
 });
 
 
